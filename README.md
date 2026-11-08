@@ -96,5 +96,5 @@
 
 | Git Log Graph |
 | :---: |
-| ![Git Log Graph](images/git%20log%20--oneline%20--graph%20결과와%20스크린샷.png) |
+| ![Git Log Graph](images/git_log.png) |
 | *`git log --oneline --graph` 결과 화면* |
