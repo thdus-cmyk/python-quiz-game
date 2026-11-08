@@ -77,7 +77,7 @@ $$\text{최종 환산 점수} = \left( \frac{\text{획득한 총 배점}}{\text{
 
 ### GitHub 저장소 복제 (Git Clone)
 ```bash
-git clone [https://github.com/thdus-cmyk/python-quiz-game.git](https://github.com/thdus-cmyk/python-quiz-game.git)
+git clone https://github.com/thdus-cmyk/python-quiz-game.git
 cd python-quiz-game
 ```
 
@@ -209,7 +209,7 @@ quiz-game/
 ### 8.3 Git Clone 및 Pull 실습 증빙
 원격 저장소(GitHub)를 별도 디렉터리에 복제(`clone`)하고, 소스 수정 후 `push` 및 `pull`을 실행하여 다중 환경 동기화를 검증했습니다.
 
-| Git Clone 실습 증빙 | Git Pull 실습 증빙 |
+| Git Clone 실습 증빙 | Git Clone 및 Pull 실습 증빙 |
 | :---: | :---: |
 | ![Git Clone](images/clone.png) | ![Git Pull](images/pull.png) |
 | *`git clone` 명령 실행 결과* | *`git pull` 실행 및 최신화 결과* |
@@ -218,18 +218,47 @@ quiz-game/
 
 ## 9. 객체지향 설계(OOP) 및 모듈화 적용 이유
 
-### 설계 방식 비교
-| 구분 | 단일 파일 절차적 구조 | 모듈화 및 OOP 구조 (본 프로젝트) |
+### 9.1 핵심 클래스 구조 (Class Architecture)
+
+| 클래스명 | 담당 역할 | 주요 속성 (Attributes) | 주요 메서드 (Methods) |
+| :---: | --- | --- | --- |
+| **`Quiz`** | 개별 문제 단위의 데이터 캡슐화 및 정답 검증 | `question`, `choices`, `answer`, `hint` | `is_correct()`, `to_dict()`, `from_dict()` |
+| **`QuizGame`** | 전체 문제 목록, 최고 점수 및 플레이 기록 상태 관리 | `quizzes`, `best_score`, `history` | `add_quiz()`, `delete_quiz()`, `load_game_data()`, `save_game_data()` |
+
+---
+
+### 9.2 클래스와 함수 기반 설계 비교 (Hybrid Architecture)
+
+본 프로젝트는 모든 제어 로직을 클래스 안에 몰아넣지 않고, **상태 관리 영역(클래스)**과 **독립 실행 영역(함수)**을 기능별로 명확히 분리하여 설계했습니다.
+
+| 구분 | 클래스 기반 설계 (`Quiz`, `QuizGame`) | 함수 기반 설계 (`quiz_play.py`, `default_quizzes.py`) |
 | --- | --- | --- |
-| **구조** | 하나의 파일에 UI, 비즈니스 로직, 데이터 처리가 연관됨 | 역할별로 `Quiz`, `QuizGame`, `play_quiz` 모듈 분리 |
-| **유지보수성** | 코드 수정 시 예기치 못한 다른 기능의 사이드 이펙트 가능성 큼 | 퀴즈 로직 수정 시 `quiz_play.py`만 수정하면 되어 안정적 |
-| **재사용성** | 타 프로젝트 활용 시 전체 코드 개편 필요 | `Quiz` 클래스와 `default_quizzes` 모듈 독립적 재활용 가능 |
+| **장점** | 데이터와 동작을 묶어 상태 관리가 편리함 | 구조가 단순하고 작은 기능을 구현하기 쉬움 |
+| **단점** | 클래스와 객체 구조를 이해해야 하므로 초기 설계가 복잡함 | 상태가 많아지면 여러 함수에 데이터를 전달해야 함 |
+| **적합한 경우** | 문제 객체, 최고 점수, 게임 기록처럼 상태를 관리할 때 | 숫자 입력, 정답 입력처럼 독립적인 처리에 적합할 때 |
+| **본 프로젝트** | `Quiz`, `QuizGame` | `get_number()`, `get_answer()`, `play_quiz()` |
+
+---
+
+### 9.3 🎯 클래스를 사용하는 이유 및 캡슐화 이점
+
+* **데이터 오염 방지 (캡슐화)**:
+  데이터와 함수가 흩어지지 않고 하나의 객체 안에 묶여 있어, 문제 `q1`의 데이터와 문제 `q2`의 데이터가 서로 섞이거나 꼬이지 않습니다. `Quiz` 클래스는 질문, 선택지, 정답, 힌트 속성과 정답 판정(`is_correct()`) 기능을 하나의 틀 안에 응집시켜 독립적인 문제 객체로 다룹니다.
+
+* **유지보수와 재사용성**:
+  문제 구조나 정답 판정 로직을 변경해야 할 때, 각 문제를 일일이 수정할 필요 없이 `Quiz` 클래스 내부 코드만 한 번 수정하면 모든 문제 객체에 동일하게 적용됩니다. 또한 타 프로젝트에서도 `Quiz` 클래스 단독 재활용이 가능합니다.
+
+* **상태 관리와 전역 변수 배제**:
+  `QuizGame` 클래스는 전체 퀴즈 목록(`self.quizzes`), 누적 히스토리, 최고 점수를 유지하며 파일 동기화를 담당합니다. 전역 변수(`global`)나 복잡한 매개변수 전달 없이 객체 내부 상태로 안정적인 데이터 연동이 가능합니다.
+
+* **클래스-함수 하이브리드 설계의 효용성**:
+  퀴즈 풀기 진행 흐름(`play_quiz()`)은 데이터를 직접 소유하기보다 절차적 순서 제어에 집중하므로 별도 함수로 독립시켰습니다. 상태 관리는 클래스에 맡기고 실행 흐름은 함수로 분리하여 코드 가독성과 유지보수성을 극대화했습니다.
 
 ---
 
 ## 10. 유지보수 영향 분석 체크리스트
 
-- [ ] **힌트 감점 비율 수정 시**: `quiz_play.py` 의 `correct_weighted_score` 계산식 변경
-- [ ] **JSON 저장 구조 변경 시**: `quiz_game.py` 의 `load_game_data()`, `save_game_data()` 내 키값 변경
-- [ ] **새 메뉴 추가 시**: `main.py` 의 `display_menu()` 및 `main()` 내 조건문 핸들러 수정
-- [ ] **기본 문제 구성 변경 시**: `default_quizzes.py` 내 `Quiz` 객체 리스트 수정
+- [ ] **힌트 감점 비율 수정 시**: `quiz_play.py` 의 `play_quiz()` 내 정답 및 힌트 환산 점수 계산식 변경
+- [ ] **JSON 저장 구조 변경 시**: `quiz_game.py` 의 `load_game_data()`, `save_game_data()` 및 `quiz.py` 의 `to_dict()`, `from_dict()` 딕셔너리 키값 수정
+- [ ] **새 메뉴 추가 시**: `main.py` 의 메뉴 출력 함수 및 `main()` 내 `elif` 분기 조건 핸들러 추가
+- [ ] **기본 문제 구성 변경 시**: `default_quizzes.py` 내 `Quiz` 객체 생성을 담당하는 리스트 요소 수정
